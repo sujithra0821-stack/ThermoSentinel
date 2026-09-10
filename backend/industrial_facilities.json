@@ -1,0 +1,32 @@
+[
+    {
+        "name": "Chennai Industrial Facility",
+        "type": "Industrial Plant",
+        "latitude": 13.0827,
+        "longitude": 80.2707
+    },
+    {
+        "name": "North Chennai Power Facility",
+        "type": "Power Plant",
+        "latitude": 13.2500,
+        "longitude": 80.3200
+    },
+    {
+        "name": "Manali Industrial Area",
+        "type": "Chemical Industry",
+        "latitude": 13.1667,
+        "longitude": 80.2583
+    },
+    {
+        "name": "Sriperumbudur Industrial Facility",
+        "type": "Manufacturing",
+        "latitude": 12.9675,
+        "longitude": 79.9410
+    },
+    {
+        "name": "Hosur Industrial Facility",
+        "type": "Manufacturing",
+        "latitude": 12.7409,
+        "longitude": 77.8253
+    }
+]
