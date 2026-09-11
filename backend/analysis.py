@@ -5,7 +5,9 @@ from math import radians, sin, cos, sqrt, atan2
 
 load_dotenv()
 
+
 NASA_KEY = os.getenv("NASA_FIRMS_MAP_KEY")
+print("NASA KEY LOADED:", NASA_KEY is not None)
 
 
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -69,13 +71,15 @@ def find_nearest_facility(hotspot_lat, hotspot_lon):
 
     return nearest_facility, shortest_distance
 def get_firms_data():
-
     url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{NASA_KEY}/VIIRS_SNPP_NRT/68,6,98,38/1"
 
     response = requests.get(url)
 
+    print("ANALYSIS NASA STATUS:", response.status_code)
+    print("ANALYSIS NASA RESPONSE LENGTH:", len(response.text))
+
     if response.status_code != 200:
-        print("FIRMS request failed:", response.status_code)
+        print("FIRMS request failed:", response.text)
         return []
 
     import csv
@@ -84,7 +88,11 @@ def get_firms_data():
     csv_data = StringIO(response.text)
     reader = csv.DictReader(csv_data)
 
-    return list(reader)
+    data = list(reader)
+
+    print("ANALYSIS FIRMS COUNT:", len(data))
+
+    return data
 def analyze_hotspot(hotspot):
 
     latitude = float(hotspot["latitude"])
@@ -99,9 +107,11 @@ def analyze_hotspot(hotspot):
     "longitude": longitude,
     "frp": float(hotspot["frp"]),
     "confidence": hotspot["confidence"],
+    "acq_time": hotspot["acq_time"],
     "nearest_facility": facility["name"],
     "facility_type": facility["type"],
     "distance_km": round(distance, 2)
+    
 }
     result["persistence_status"] = detect_persistence(result)
     return result

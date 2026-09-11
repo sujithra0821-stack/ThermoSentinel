@@ -14,6 +14,19 @@ function App() {
   const [facilities, setFacilities] = useState([])
   const [filter, setFilter] = useState('ALL')
 
+const thermalActivity = Array.from({ length: 24 }, (_, hour) => {
+  return hotspots.filter((hotspot) => {
+    if (hotspot.acq_time === undefined) {
+      return false
+    }
+
+    const time = String(hotspot.acq_time).padStart(4, '0')
+    const hotspotHour = parseInt(time.slice(0, 2), 10)
+
+    return hotspotHour === hour
+  }).length
+})
+
   const highRisk = hotspots.filter(
   (hotspot) => hotspot.risk_level === 'HIGH'
 ).length
@@ -108,8 +121,88 @@ const filteredHotspots =
     <h3>LOW RISK</h3>
     <p>{lowRisk}</p>
   </div>
+  
 
 </div>
+
+  <div className="thermal-chart">
+    <h2>📈 Thermal Activity — Last 24 Hours</h2>
+
+    <div className="line-chart">
+      <svg
+        viewBox="0 0 960 300"
+        width="100%"
+        height="300"
+        preserveAspectRatio="none"
+      >
+        {[50, 100, 150, 200, 250].map((y) => (
+          <line
+            key={y}
+            x1="40"
+            y1={y}
+            x2="940"
+            y2={y}
+            stroke="#26344d"
+            strokeWidth="1"
+          />
+        ))}
+
+        <polyline
+          fill="none"
+          stroke="#f97316"
+          strokeWidth="4"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          points={thermalActivity
+            .map((count, hour) => {
+              const maxCount = Math.max(...thermalActivity, 1)
+              const x = 40 + (hour / 23) * 900
+              const y = 250 - (count / maxCount) * 200
+              return `${x},${y}`
+            })
+            .join(' ')}
+        />
+
+        {thermalActivity.map((count, hour) => {
+          const maxCount = Math.max(...thermalActivity, 1)
+          const x = 40 + (hour / 23) * 900
+          const y = 250 - (count / maxCount) * 200
+
+          return (
+            <circle
+              key={hour}
+              cx={x}
+              cy={y}
+              r="5"
+              fill="#f97316"
+            >
+              <title>
+                {count} detections at {hour}:00
+              </title>
+            </circle>
+          )
+        })}
+
+        {thermalActivity.map((_, hour) => {
+          const x = 40 + (hour / 23) * 900
+
+          return (
+            <text
+              key={hour}
+              x={x}
+              y="280"
+              textAnchor="middle"
+              fill="#9ca3af"
+              fontSize="12"
+            >
+              {hour}
+            </text>
+          )
+        })}
+      </svg>
+    </div>
+  </div>
+
 
       <div className="map-container">
 

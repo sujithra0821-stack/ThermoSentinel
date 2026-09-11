@@ -148,3 +148,53 @@ header p {
   border-color: white;
   font-weight: bold;
 }
+.thermal-chart {
+  width: 92%;
+  margin: 0 auto 30px;
+  padding: 20px;
+  background: #151f32;
+  border: 1px solid #26344d;
+  border-radius: 14px;
+}
+
+.thermal-chart h2 {
+  margin: 0 0 20px;
+  font-size: 20px;
+}
+
+.chart {
+  height: 180px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid #475569;
+}
+
+.chart-bar-container {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-bar {
+  width: 100%;
+  max-width: 28px;
+  min-height: 4px;
+  background: #f97316;
+  border-radius: 5px 5px 0 0;
+  transition: height 0.3s ease;
+}
+
+.chart-bar:hover {
+  opacity: 0.75;
+}
+
+.chart-bar-container span {
+  font-size: 10px;
+  color: #9ca3af;
+}

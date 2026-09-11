@@ -7,6 +7,13 @@ import csv
 import json
 from io import StringIO
 
+from analysis import (
+    get_firms_data as analysis_get_firms_data,
+    analyze_hotspot,
+    classify_hotspot,
+    calculate_risk
+)
+
 load_dotenv()
 
 app = FastAPI()
@@ -18,6 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 NASA_KEY = os.getenv("NASA_FIRMS_MAP_KEY")
 
 
@@ -30,26 +38,27 @@ def home():
 
 
 @app.get("/firms")
-def get_firms_data():
-
-    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{NASA_KEY}/VIIRS_SNPP_NRT/68,6,98,38/1"
+def get_firms():
+    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{NASA_KEY}/VIIRS_SNPP_NRT/68,6,98,38/5"
 
     response = requests.get(url)
 
     csv_data = StringIO(response.text)
-
     reader = csv.DictReader(csv_data)
-
     data = list(reader)
+
+    print("NASA STATUS:", response.status_code)
+    print("NASA HOTSPOTS:", len(data))
 
     return {
         "status": response.status_code,
         "count": len(data),
         "data": data
     }
+
+
 @app.get("/facilities")
 def get_facilities():
-
     with open("industrial_facilities.json", "r") as file:
         facilities = json.load(file)
 
@@ -57,23 +66,14 @@ def get_facilities():
         "count": len(facilities),
         "facilities": facilities
     }
-@app.get("/facilities")
-def get_facilities():
-
-    with open("industrial_facilities.json", "r") as file:
-        facilities = json.load(file)
-
-    return {
-        "count": len(facilities),
-        "facilities": facilities
-    }
-from analysis import get_firms_data, analyze_hotspot, classify_hotspot, calculate_risk
 
 
 @app.get("/analyzed-hotspots")
 def get_analyzed_hotspots():
 
-    hotspots = get_firms_data()
+    nasa_result = get_firms()
+
+    hotspots = nasa_result["data"]
 
     results = []
 
