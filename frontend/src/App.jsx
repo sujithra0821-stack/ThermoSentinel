@@ -46,12 +46,12 @@ const filteredHotspots =
         (hotspot) => hotspot.classification === filter
       )
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/analyzed-hotspots')
+    fetch('https://thermosentinel-6xw3.onrender.com/analyzed-hotspots')
       .then((response) => response.json())
       .then((data) => setHotspots(data.hotspots))
       .catch((error) => console.error('Hotspot error:', error))
 
-    fetch('http://127.0.0.1:8000/facilities')
+    fetch('https://thermosentinel-6xw3.onrender.com/facilities')
       .then((response) => response.json())
       .then((data) => setFacilities(data.facilities))
       .catch((error) => console.error('Facility error:', error))
