@@ -13,6 +13,15 @@ function App() {
   const [hotspots, setHotspots] = useState([])
   const [facilities, setFacilities] = useState([])
   const [filter, setFilter] = useState('ALL')
+  const [incidents, setIncidents] = useState([])
+
+  const industrialHotspots = hotspots.filter(
+  (hotspot) => hotspot.classification === 'Possible Industrial Fire'
+).length
+
+const persistentSources = hotspots.filter(
+  (hotspot) => hotspot.persistence_status === 'Persistent Thermal Source'
+).length
 
 const thermalActivity = Array.from({ length: 24 }, (_, hour) => {
   return hotspots.filter((hotspot) => {
@@ -45,27 +54,111 @@ const filteredHotspots =
     : hotspots.filter(
         (hotspot) => hotspot.classification === filter
       )
-  useEffect(() => {
-    fetch('https://thermosentinel-6xw3.onrender.com/analyzed-hotspots')
-      .then((response) => response.json())
-      .then((data) => setHotspots(data.hotspots))
-      .catch((error) => console.error('Hotspot error:', error))
+useEffect(() => {
+  const loadDashboardData = async () => {
+    try {
+      // 1. Load NASA FIRMS analyzed hotspots
+      const hotspotResponse = await fetch(
+        'http://127.0.0.1:8001/analyzed-hotspots'
+      )
 
-    fetch('https://thermosentinel-6xw3.onrender.com/facilities')
-      .then((response) => response.json())
-      .then((data) => setFacilities(data.facilities))
-      .catch((error) => console.error('Facility error:', error))
-  }, [])
+      if (!hotspotResponse.ok) {
+        throw new Error('Failed to load hotspot data')
+      }
+
+      const hotspotData = await hotspotResponse.json()
+
+      setHotspots(hotspotData.hotspots)
+
+      // 2. Load industrial facilities
+      const facilityResponse = await fetch(
+        'http://127.0.0.1:8001/facilities'
+      )
+
+      if (!facilityResponse.ok) {
+        throw new Error('Failed to load facility data')
+      }
+
+      const facilityData = await facilityResponse.json()
+
+      setFacilities(facilityData.facilities)
+
+      // 3. Load thermal incidents
+      const incidentResponse = await fetch(
+        'http://127.0.0.1:8001/incidents'
+      )
+
+      if (!incidentResponse.ok) {
+        throw new Error('Failed to load incident data')
+      }
+
+      const incidentData = await incidentResponse.json()
+
+      setIncidents(incidentData.incidents)
+
+    } catch (error) {
+      console.error('Dashboard data error:', error)
+    }
+  }
+
+  loadDashboardData()
+}, [])
 
   return (
     <div className="app">
 
-      <header>
-        <h1>ThermoSentinel</h1>
-        <p>
-          AI-Powered Industrial Fire & Persistent Thermal Source Intelligence
-        </p>
-      </header>
+    <header className="main-header">
+  <div className="brand-section">
+    <div className="brand-icon">🔥</div>
+
+    <div>
+      <h1>ThermoSentinel</h1>
+      <p>
+        AI-Powered Industrial Fire & Persistent Thermal Source Intelligence
+      </p>
+    </div>
+  </div>
+
+  <nav className="main-navigation">
+    <a href="#command-center">Command Center</a>
+    <a href="#incidents">Incidents</a>
+    <a href="#analytics">Analytics</a>
+    <a href="#map">Live Map</a>
+    <a href="#facilities">Facilities</a>
+  </nav>
+
+  <div className="header-status">
+    <span className="status-dot"></span>
+    <span>SYSTEM LIVE</span>
+  </div>
+</header>
+
+      <div className="system-status">
+  <div className="status-item">
+    <span className="status-dot"></span>
+    <strong>SYSTEM LIVE</strong>
+  </div>
+
+  <div className="status-item">
+    <span>🛰️</span>
+    NASA FIRMS
+  </div>
+
+  <div className="status-item">
+    <span>📡</span>
+    VIIRS SNPP NRT
+  </div>
+
+  <div className="status-item">
+    <span>🔥</span>
+    {hotspots.length} observations
+  </div>
+
+  <div className="status-item">
+    <span>🕐</span>
+    Near Real-Time
+  </div>
+</div>
       <div className="filter-bar">
 
 <button
@@ -87,129 +180,247 @@ const filteredHotspots =
 
 </div>
 
-      <div className="dashboard">
+      <div className="dashboard" id="command-center">
 
         <div className="card">
-          <h2>🔥 Thermal Hotspots</h2>
-          <p>{hotspots.length}</p>
-        </div>
+  <h2>🔥 Total Hotspots</h2>
+  <p>{hotspots.length}</p>
+  <span>NASA FIRMS detections</span>
+</div>
 
-        <div className="card">
-          <h2>🏭 Industrial Facilities</h2>
-          <p>{facilities.length}</p>
-        </div>
+<div className="card">
+  <h2>🏭 Industrial Links</h2>
+  <p>{industrialHotspots}</p>
+  <span>Potential industrial association</span>
+</div>
 
-        <div className="card">
-          <h2>🤖 AI Classification</h2>
-          <p>Active</p>
-        </div>
+<div className="card">
+  <h2>🚨 High Risk</h2>
+  <p>{highRisk}</p>
+  <span>Priority monitoring</span>
+</div>
 
+<div className="card">
+  <h2>♨️ Persistent Sources</h2>
+  <p>{persistentSources}</p>
+  <span>Elevated thermal activity</span>
+</div>
       </div>
       <div className="risk-dashboard">
 
-  <div className="risk-card">
-    <h3>HIGH RISK</h3>
-    <p>{highRisk}</p>
-  </div>
+  <div className="risk-card high">
+  <div className="risk-icon">🚨</div>
+  <h3>HIGH RISK</h3>
+  <p>{highRisk}</p>
+  <span>Immediate attention</span>
+</div>
 
-  <div className="risk-card">
-    <h3>MEDIUM RISK</h3>
-    <p>{mediumRisk}</p>
-  </div>
+<div className="risk-card medium">
+  <div className="risk-icon">⚠️</div>
+  <h3>MEDIUM RISK</h3>
+  <p>{mediumRisk}</p>
+  <span>Requires monitoring</span>
+</div>
 
-  <div className="risk-card">
-    <h3>LOW RISK</h3>
-    <p>{lowRisk}</p>
-  </div>
-  
+<div className="risk-card low">
+  <div className="risk-icon">🟢</div>
+  <h3>LOW RISK</h3>
+  <p>{lowRisk}</p>
+  <span>Normal monitoring</span>
+</div>
+
 
 </div>
 
-  <div className="thermal-chart">
-    <h2>📈 Thermal Activity — Last 24 Hours</h2>
+<div className="analytics-panel" id="analytics">
 
-    <div className="line-chart">
-      <svg
-        viewBox="0 0 960 300"
-        width="100%"
-        height="300"
-        preserveAspectRatio="none"
-      >
-        {[50, 100, 150, 200, 250].map((y) => (
-          <line
-            key={y}
-            x1="40"
-            y1={y}
-            x2="940"
-            y2={y}
-            stroke="#26344d"
-            strokeWidth="1"
-          />
-        ))}
-
-        <polyline
-          fill="none"
-          stroke="#f97316"
-          strokeWidth="4"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          points={thermalActivity
-            .map((count, hour) => {
-              const maxCount = Math.max(...thermalActivity, 1)
-              const x = 40 + (hour / 23) * 900
-              const y = 250 - (count / maxCount) * 200
-              return `${x},${y}`
-            })
-            .join(' ')}
-        />
-
-        {thermalActivity.map((count, hour) => {
-          const maxCount = Math.max(...thermalActivity, 1)
-          const x = 40 + (hour / 23) * 900
-          const y = 250 - (count / maxCount) * 200
-
-          return (
-            <circle
-              key={hour}
-              cx={x}
-              cy={y}
-              r="5"
-              fill="#f97316"
-            >
-              <title>
-                {count} detections at {hour}:00
-              </title>
-            </circle>
-          )
-        })}
-
-        {thermalActivity.map((_, hour) => {
-          const x = 40 + (hour / 23) * 900
-
-          return (
-            <text
-              key={hour}
-              x={x}
-              y="280"
-              textAnchor="middle"
-              fill="#9ca3af"
-              fontSize="12"
-            >
-              {hour}
-            </text>
-          )
-        })}
-      </svg>
+  <div className="analytics-header">
+    <div>
+      <h2>📊 Thermal Intelligence</h2>
+      <p>Real-time analysis of detected thermal activity</p>
     </div>
   </div>
 
+  <div className="analytics-grid">
 
-      <div className="map-container">
+    <div className="analytics-item">
+      <div className="analytics-label">
+        <span>🔥 Thermal Detections</span>
+        <strong>{hotspots.length}</strong>
+      </div>
+      <div className="progress-track">
+        <div
+          className="progress-fill"
+          style={{
+            width: `${Math.min((hotspots.length / 1500) * 100, 100)}%`
+          }}
+        ></div>
+      </div>
+    </div>
+
+    <div className="analytics-item">
+      <div className="analytics-label">
+        <span>🏭 Industrial Associations</span>
+        <strong>{industrialHotspots}</strong>
+      </div>
+      <div className="progress-track">
+        <div
+          className="progress-fill"
+          style={{
+            width: `${Math.min((industrialHotspots / Math.max(hotspots.length, 1)) * 100, 100)}%`
+          }}
+        ></div>
+      </div>
+    </div>
+
+    <div className="analytics-item">
+      <div className="analytics-label">
+        <span>🚨 High Risk</span>
+        <strong>{highRisk}</strong>
+      </div>
+      <div className="progress-track">
+        <div
+          className="progress-fill"
+          style={{
+            width: `${Math.min((highRisk / Math.max(hotspots.length, 1)) * 100, 100)}%`
+          }}
+        ></div>
+      </div>
+    </div>
+
+    <div className="analytics-item">
+      <div className="analytics-label">
+        <span>♨️ Persistent Sources</span>
+        <strong>{persistentSources}</strong>
+      </div>
+      <div className="progress-track">
+        <div
+          className="progress-fill"
+          style={{
+            width: `${Math.min((persistentSources / Math.max(hotspots.length, 1)) * 100, 100)}%`
+          }}
+        ></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div className="incident-center" id="incidents">
+
+  <div className="analytics-header">
+    <div>
+      <h2>🚨 Incident Center</h2>
+      <p>Thermal events derived from NASA FIRMS observations</p>
+    </div>
+
+    <div className="incident-count">
+      {incidents.length} incidents
+    </div>
+  </div>
+
+  <div className="incident-table">
+
+    <div className="incident-table-header">
+      <span>INCIDENT</span>
+      <span>RISK</span>
+      <span>OBS.</span>
+      <span>MAX FRP</span>
+      <span>PERSISTENCE</span>
+      <span>INDUSTRIAL LINK</span>
+    </div>
+
+    {incidents.slice(0, 10).map((incident) => (
+
+      <div className="incident-row" key={incident.incident_id}>
+
+        <div>
+          <strong>{incident.incident_id}</strong>
+          <small>
+            {incident.center_latitude.toFixed(4)},
+            {' '}
+            {incident.center_longitude.toFixed(4)}
+          </small>
+        </div>
+
+        <span
+          className={`risk-badge ${incident.risk_level.toLowerCase()}`}
+        >
+          {incident.risk_level}
+        </span>
+
+        <span>{incident.observation_count}</span>
+
+        <span>{incident.maximum_frp} MW</span>
+
+        <span>{incident.persistence_days} day(s)</span>
+
+        <span>
+          {incident.industrial_link ? (
+            <strong className="industrial-yes">YES</strong>
+          ) : (
+            <span className="industrial-no">NONE</span>
+          )}
+        </span>
+
+      </div>
+
+    ))}
+
+  </div>
+
+  <div className="incident-footer-note">
+    Showing 10 of {incidents.length} detected incidents
+  </div>
+
+</div>
+
+<div className="facilities-section" id="facilities">
+  <div className="analytics-header">
+    <div>
+      <h2>🏭 Industrial Facilities Intelligence</h2>
+      <p>Industrial infrastructure identified from OpenStreetMap</p>
+    </div>
+
+    <div className="incident-count">
+      {facilities.length} facilities
+    </div>
+  </div>
+
+  <div className="facilities-grid">
+    {facilities.slice(0, 12).map((facility) => (
+      <div className="facility-card" key={`${facility.osm_type}-${facility.osm_id}`}>
+        <div className="facility-icon">🏭</div>
+
+        <div>
+          <h3>{facility.name || 'Unnamed Facility'}</h3>
+
+          <p>
+            {facility.type || 'Industrial Facility'}
+          </p>
+
+          {facility.operator && (
+            <small>
+              Operator: {facility.operator}
+            </small>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div className="incident-footer-note">
+    Showing {Math.min(facilities.length, 12)} of {facilities.length} facilities
+  </div>
+</div>
+
+      <div className="map-container" id="map">
 
         <MapContainer
-          center={[20, 78]}
-          zoom={5}
-          style={{ height: '600px', width: '100%' }}
+        center={[20, 78]}
+        zoom={5}
+        style={{ height: '650px', width: '100%' }}
         >
 
           <TileLayer
@@ -223,12 +434,21 @@ const filteredHotspots =
               key={index}
               center={[hotspot.latitude, hotspot.longitude]}
               radius={7}
-              pathOptions={{
-                color:
-                  hotspot.classification === 'Possible Industrial Fire'
-                    ? 'red'
-                    : 'orange',
-              }}
+             pathOptions={{
+  color:
+    hotspot.risk_level === 'HIGH'
+      ? 'red'
+      : hotspot.risk_level === 'MEDIUM'
+        ? 'orange'
+        : 'green',
+  fillColor:
+    hotspot.risk_level === 'HIGH'
+      ? 'red'
+      : hotspot.risk_level === 'MEDIUM'
+        ? 'orange'
+        : 'green',
+  fillOpacity: 0.8,
+}}
             >
 
               <Popup>
@@ -293,16 +513,16 @@ const filteredHotspots =
 
           {facilities.map((facility, index) => (
 
-            <CircleMarker
-              key={`facility-${index}`}
-              center={[facility.latitude, facility.longitude]}
-              radius={9}
-              pathOptions={{
-                color: 'blue',
-                fillColor: 'blue',
-                fillOpacity: 0.8,
-              }}
-            >
+<CircleMarker
+  key={`facility-${index}`}
+  center={[facility.latitude, facility.longitude]}
+  radius={9}
+  pathOptions={{
+    color: 'blue',
+    fillColor: 'blue',
+    fillOpacity: 0.8,
+  }}
+>
 
               <Popup>
                 <strong>🏭 Industrial Facility</strong>
@@ -319,10 +539,11 @@ const filteredHotspots =
           ))}
 
         </MapContainer>
-        <div className="legend">
+<div className="legend">
   <strong>Map Legend</strong>
-  <div>🔴 Possible Industrial Fire</div>
-  <div>🟠 Other Thermal Anomaly</div>
+  <div>🔴 High Risk</div>
+  <div>🟠 Medium Risk</div>
+  <div>🟢 Low Risk</div>
   <div>🔵 Industrial Facility</div>
 </div>
 
